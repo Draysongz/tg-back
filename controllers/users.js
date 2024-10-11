@@ -215,3 +215,54 @@ exports.refillTaps = async (req, res) => {
   }
 };
 
+exports.dailyCheckIn = async (req, res) => {
+  const { userId } = req.body;
+
+  try {
+    // Fetch user details
+    const user = await prisma.user.findUnique({ where: { telegramId: userId } });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const now = new Date();
+    const lastCheckIn = user.lastCheckIn ? new Date(user.lastCheckIn) : null;
+    const hasCheckedInToday =
+      lastCheckIn &&
+      now.getDate() === lastCheckIn.getDate() &&
+      now.getMonth() === lastCheckIn.getMonth() &&
+      now.getFullYear() === lastCheckIn.getFullYear();
+
+    if (hasCheckedInToday) {
+      return res.status(400).json({ message: "You've already checked in today!" });
+    }
+
+    // Reward logic based on streak
+    const rewards = [500, 1000, 2500, 5000, 15000, 25000, 100000, 500000, 1000000, 5000000, 10000000, 15000000, 20000000, 25000000, 35000000];
+    const streak = user.checkInStreak || 0;
+    const dailyReward = rewards[Math.min(streak, rewards.length - 1)];
+
+    const updatedCoins = user.coins + dailyReward;
+
+    // Update the user's check-in date, coins, and streak
+    const updatedUser = await prisma.user.update({
+      where: { telegramId: userId },
+      data: {
+        coins: updatedCoins,
+        lastCheckIn: now,
+        checkInStreak: lastCheckIn && now - lastCheckIn < 86400000 ? streak + 1 : 1, // Increment if the last check-in was within 24 hours
+      },
+    });
+
+    res.status(200).json({
+      message: "Daily check-in successful!",
+      updatedUser
+    });
+  } catch (error) {
+    console.error("Error during daily check-in:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+

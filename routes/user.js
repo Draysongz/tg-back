@@ -6,7 +6,8 @@ const {
   updateUserBalance,
   authenticateToken,
   getReferredUsers,
-  refillTaps
+  refillTaps,
+  dailyCheckIn
 } = require('../controllers/users');
 
 
@@ -29,6 +30,8 @@ router.get('/users/:userId', authenticateToken, getReferredUsers )
 router.put('/balance/:userId',  updateUserBalance);
 
 router.post('/user/refill', refillTaps)
+
+router.post('/user/checkin', dailyCheckIn)
 
 module.exports = router;
 

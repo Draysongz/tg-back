@@ -29,10 +29,12 @@ model User {
   referrals       Referral[] // Relation to Referral model (who this user has referred)
   freeSpins       Int       @default(0)    // Free spins user can use (from referral or other bonuses)
   multitap        Int      @default(1) // Multiplier for points per tap
-  tapLimitBoost   Int      @default(0) // Additional taps from tap limit boosters
+  tapLimitBoost   Int      @default(1) // Additional taps from tap limit boosters
   tappingGuruUses Int      @default(3) // Free booster uses per day
   profitPerHour   Int      @default(0) // Total profit per hour from owned cards
   lastEarningsUpdate DateTime @default(now())
+  lastCheckIn    DateTime?
+  checkInStreak  Int      @default(0) // Optional: for consecutive check-in rewards
 
   cards           CardPurchase[]
   createdAt       DateTime @default(now())
