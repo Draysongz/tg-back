@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  telegramId      String   @unique // Telegram user identifier
+  username        String   @unique
+  level           Int      @default(0) // Corresponds to the level names array index
+  coins           Int      @default(0)
+  taps            Int      @default(500) // Users start with 500 taps
+  maxTaps         Int      @default(500) // Initial maximum taps for new users
+  refillRate      Int      @default(1) // Taps regained per minute
+  lastRefillTime  DateTime @default(now()) // For tracking refill logic
+  slots           Int       @default(0) 
+  referralCount   Int       @default(0)    // Number of people user has referred
+  referredBy      String?   // The user who referred this user (optional, can be null if not referred)
+  referrals       Referral[] // Relation to Referral model (who this user has referred)
+  freeSpins       Int       @default(0)    // Free spins user can use (from referral or other bonuses)
+  multitap        Int      @default(1) // Multiplier for points per tap
+  tapLimitBoost   Int      @default(0) // Additional taps from tap limit boosters
+  tappingGuruUses Int      @default(3) // Free booster uses per day
+  profitPerHour   Int      @default(0) // Total profit per hour from owned cards
+  lastEarningsUpdate DateTime @default(now())
+
+  cards           CardPurchase[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model CardPurchase {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
+  cardId     String   @db.ObjectId
+  level      Int      @default(1) // Level of the card (1-12)
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id])
+  card       Card     @relation(fields: [cardId], references: [id])
+}
+
+model Card {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  name           String        @unique
+  category       CardCategory  // Enum for category: Skill, Business, Special
+  baseProfit     Int           // Base profit per hour when at level 1
+  profitIncrease Float         // Multiplier for profit increase per level
+  maxLevel       Int           @default(12) // Maximum level of the card
+  baseCost       Int          // Initial cost of the card at level 1, nullable for cards with prerequisites
+  costIncrease   Float        // Multiplier for cost increase per level, nullable for cards with prerequisites
+  requires       String?       // Requirements for this card to be available, nullable for cards without requirements
+  imagePath      String        // Path to the card image
+  coinIcon       String        // Path to the coin icon associated with the card
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  cardPurchases  CardPurchase[]
+}
+
+
+
+model Referral {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   // The user who made the referral
+  referredId  String   // The referred user ID
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade) // User who made the referral
+  createdAt   DateTime @default(now())
+
+  @@map("referrals")
+}
+
+enum CardCategory {
+  SKILL
+  BUSINESS
+  SPECIAL
+}
