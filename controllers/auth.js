@@ -102,6 +102,30 @@ exports.telegramAuth = async (req, res) => {
       }
     }
 
+     const existingUserTasks = await prisma.userTask.findMany({
+      where: { userId: user.id },
+    });
+
+    // Step 7: If the user has no tasks assigned, create tasks for them
+    if (existingUserTasks.length === 0) {
+      // Fetch all available tasks
+      const tasks = await prisma.task.findMany();
+
+      // Create UserTask entries for the user
+      const userTaskPromises = tasks.map((task) =>
+        prisma.userTask.create({
+          data: {
+            userId: user.id,
+            taskId: task.id,
+            claimed: false,
+          },
+        })
+      );
+
+      // Wait for all tasks to be created
+      await Promise.all(userTaskPromises);
+    }
+
     // Step 6: Create JWT token for the user
     const token = jwt.sign(
       { userId: user.id, telegramId: user.telegramId },

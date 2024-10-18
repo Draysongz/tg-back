@@ -265,4 +265,45 @@ exports.dailyCheckIn = async (req, res) => {
   }
 };
 
+exports.getReferredUsers = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    // Step 1: Find the user with the given telegramId
+    const user = await prisma.user.findUnique({
+      where: { telegramId: userId },
+    });
+
+    // If the user is not found, return a 404 error
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Step 2: Fetch all referrals made by the user
+    const referrals = await prisma.referral.findMany({
+      where: {
+        userId: userId, // Use the telegramId directly as the userId in the query
+      },
+    });
+
+    // Step 3: Fetch the details of each referred user using the referredId
+    const referredUsers = await Promise.all(
+      referrals.map((referral) =>
+        prisma.user.findUnique({
+          where: {
+            id: referral.referredId, // Use the referredId which is the ObjectId
+          },
+        })
+      )
+    );
+
+    // Step 4: Return the list of referred users
+    res.json({ referredUsers });
+
+  } catch (error) {
+    console.error("Error fetching referred users:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 

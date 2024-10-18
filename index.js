@@ -4,6 +4,7 @@ const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const cardRoutes = require("./routes/cards")
+const taskRoutes = require('./routes/tasks')
 
 const corsOptions = {
   origin: ['https://tg-front-eight.vercel.app', 'http://localhost:5173'], // Replace with the exact URL of your frontend 
@@ -22,7 +23,7 @@ app.use(express.json());
 app.use('/api', authRoutes);
 app.use('/api', userRoutes);
 app.use('/api', cardRoutes);
-// app.use('/api', withdrawalRoutes);
+app.use('/api', taskRoutes);
 
 // Start the server
 app.listen(3000, () => {

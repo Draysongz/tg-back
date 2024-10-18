@@ -37,6 +37,7 @@ model User {
   checkInStreak  Int      @default(0) // Optional: for consecutive check-in rewards
 
   cards           CardPurchase[]
+  userTasks       UserTask[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -81,9 +82,42 @@ model Referral {
 
   @@map("referrals")
 }
+model Task {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  category    TaskCategory  // Enum: INVITE, CHALLENGE
+  description String   // Task description
+  levelName   String?  // Only for CHALLENGE category tasks
+  reward      Int      // Reward amount in coins
+  requiredInvites Int? // For INVITE tasks, number of invites required
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userTasks   UserTask[]  // Relationship to track user-specific tasks
+}
+
+model UserTask {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  taskId      String   @db.ObjectId
+  claimed     Boolean  @default(false)  // Tracks if the reward has been claimed
+  
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id])
+  task        Task     @relation(fields: [taskId], references: [id])
+}
+
 
 enum CardCategory {
   SKILL
   BUSINESS
   SPECIAL
+}
+
+
+enum TaskCategory {
+  INVITE
+  CHALLENGE
 }

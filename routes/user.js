@@ -33,5 +33,7 @@ router.post('/user/refill', refillTaps)
 
 router.post('/user/checkin', dailyCheckIn)
 
+router.get('/users/:userId', authenticateToken, getReferredUsers )
+
 module.exports = router;
 
